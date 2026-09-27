@@ -1,0 +1,17 @@
+{
+  "name": "Nhận đơn Hải Sản Khải",
+  "short_name": "Nhận đơn HSK",
+  "description": "Lên đơn, theo dõi đóng hàng và giờ xe chạy của vựa Hải Sản Khải",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F3F6F8",
+  "theme_color": "#0B6C8F",
+  "lang": "vi",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
