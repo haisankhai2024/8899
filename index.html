@@ -44,6 +44,7 @@ button{font:inherit;cursor:pointer}
 .canh-bao{margin-top:8px;border-radius:10px;padding:9px 12px;font-size:13.5px;display:none;align-items:center;gap:10px;cursor:pointer}
 .canh-bao.do{display:flex;background:var(--do-nen);color:var(--do);border:1px solid var(--do)}
 .canh-bao.cam{display:flex;background:var(--cam-nen);color:var(--cam);border:1px solid var(--cam)}
+.canh-bao.chuong{display:flex;background:var(--bien-nhat);color:var(--bien);border:1px solid var(--bien)}
 .canh-bao b{font-size:15px}
 .tom{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}
 @media (max-width:520px){.tom{grid-template-columns:repeat(3,1fr)}}
@@ -218,7 +219,7 @@ function kiemCanhBao(){
   var doMoi={}; var moi=[];
   S.don.forEach(function(d){ if(mucDo(d)==='do'){ doMoi[d.MA]=1; if(S.doCu && !S.doCu[d.MA]) moi.push(d); } });
   if (S.doCu===null){ if(Object.keys(doMoi).length) keu(); }
-  else if (moi.length){ keu(); if(window.Notification && Notification.permission==='granted'){ var tieuDe='Sắp tới giờ xe — '+moi.length+' đơn cần đóng gấp', than=moi.map(function(d){return d.KHACH+' · '+(mocDon(d)?conBaoLau(mocDon(d)):'');}).join('\n'); try{ if(navigator.serviceWorker && navigator.serviceWorker.ready){ navigator.serviceWorker.ready.then(function(reg){ reg.showNotification(tieuDe,{body:than, vibrate:[250,120,250], tag:'hsk-do', renotify:true, icon:'icon-192.png'}); }); } else new Notification(tieuDe,{body:than}); }catch(e){} } }
+  else if (moi.length){ keu(); if(window.Notification && Notification.permission==='granted' && !DAY.bat){ var tieuDe='Sắp tới giờ xe — '+moi.length+' đơn cần đóng gấp', than=moi.map(function(d){return d.KHACH+' · '+(mocDon(d)?conBaoLau(mocDon(d)):'');}).join('\n'); try{ if(navigator.serviceWorker && navigator.serviceWorker.ready){ navigator.serviceWorker.ready.then(function(reg){ reg.showNotification(tieuDe,{body:than, vibrate:[250,120,250], tag:'hsk-do', renotify:true, icon:'icon-192.png'}); }); } else new Notification(tieuDe,{body:than}); }catch(e){} } }
   S.doCu=doMoi;
   try{ var soDo=Object.keys(doMoi).length; if(navigator.setAppBadge){ if(soDo) navigator.setAppBadge(soDo); else navigator.clearAppBadge(); } }catch(e){}
 }
@@ -235,9 +236,9 @@ function ve(){
   var ds=locDon(); var dem={do:0,cam:0,dangdong:0,dadong:0,dagui:0}; var hom=new Date();
   S.don.forEach(function(d){ var m=mucDo(d); if(m==='do') dem.do++; if(m==='cam') dem.cam++; if(d.TRANG_THAI==='Đang đóng') dem.dangdong++; if(d.TRANG_THAI==='Đã đóng') dem.dadong++; if(d.TRANG_THAI==='Đã gửi'&&parseLuc(d.GUI_LUC)&&cungNgay(parseLuc(d.GUI_LUC),hom)) dem.dagui++; });
   var nv=(S.dm.NHAN_VIEN||[]).map(function(x){return x.ten;});
-  var h='<header><div class="dau"><h1>Nhận đơn <small>Hải Sản Khải</small></h1><div class="dong-ho">'+(S.toi?'<b>'+esc(S.toi)+'</b> · ':'')+'<span id="gioHienTai">'+gioISO(new Date())+'</span> <button class="nut nho" onclick="taiDuLieu()" title="Tải lại">↻</button>'+(S.quanLy?' <button class="nut nho" onclick="moCaiDat()">⚙</button>':'')+'</div></div>';
+  var h='<header><div class="dau"><h1>Nhận đơn <small>Hải Sản Khải</small></h1><div class="dong-ho">'+(S.toi?'<b>'+esc(S.toi)+'</b> · ':'')+'<span id="gioHienTai">'+gioISO(new Date())+'</span> <button class="nut nho" onclick="taiDuLieu()" title="Tải lại">↻</button>'+nutChuong()+(S.quanLy?' <button class="nut nho" onclick="moCaiDat()">⚙</button>':'')+'</div></div>';
   var cb = dem.do ? '<div class="canh-bao do" onclick="datXem(\'do\')"><span class="nhay">🔴</span><div><b>'+dem.do+' đơn</b> sắp tới giờ xe / quá giờ mà chưa đóng xong — bấm để xem</div></div>' : (dem.cam ? '<div class="canh-bao cam" onclick="datXem(\'cam\')">🟠 <div><b>'+dem.cam+' đơn</b> tới giờ xe trong '+S.ch.PHUT_CANH_BAO+' phút — chuẩn bị đóng</div></div>' : '');
-  h+=cb;
+  h+=cb; h+=bangChuong();
   h+='<div class="tom">'+oTom('do','Gấp',dem.do,'do')+oTom('cam','Sắp tới giờ',dem.cam,'cam')+oTom('dangdong','Đang đóng',dem.dangdong,'vang')+oTom('dadong','Đã đóng, chờ xe',dem.dadong,'xanh')+oTom('dagui','Đã gửi hôm nay',dem.dagui,'tim')+'</div>';
   h+='<div class="loc"><div class="hang"><span class="tt">Xem</span>'+chip('xem','canlam','Cần làm')+chip('xem','homnay','Hôm nay')+chip('xem','ngaymai','Ngày mai')+chip('xem','daxong','Đã xong')+'</div>';
   h+='<div class="hang"><span class="tt">Gửi</span>'+chip('vc','','Tất cả')+VAN_CHUYEN.map(function(v){return chip('vc',v,v.replace('Chành xe ','CX '));}).join('')+'</div>';
@@ -262,6 +263,56 @@ function veDs(){
   }).join('');
 }
 
+// ===================== THÔNG BÁO ĐẨY (01/10/2026) — chỉ có ở bản cài điện thoại =====================
+var DAY={bat:false, dangLam:false};
+function dayHoTro(){ return !!(window.API_URL && 'serviceWorker' in navigator && 'PushManager' in window && window.Notification); }
+function laIOS(){ return /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1); }
+function laCaiRa(){ return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone===true; }
+function u8Tu64(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; var b=atob(s), o=new Uint8Array(b.length); for(var i=0;i<b.length;i++) o[i]=b.charCodeAt(i); return o; }
+function cungKhoa(sub,k){ try{ var a=new Uint8Array(sub.options.applicationServerKey); if(a.length!==k.length) return false; for(var i=0;i<a.length;i++) if(a[i]!==k[i]) return false; return true; }catch(e){ return true; } }
+function veLai(){ try{ if(S.pin && S.don && !S.ngan) ve(); }catch(e){} }
+function nutChuong(){ if(!window.API_URL) return ''; return ' <button class="nut nho" onclick="batThongBao()" title="'+(DAY.bat?'Thông báo đang bật':'Bật thông báo')+'">'+(DAY.bat?'🔔':'🔕')+'</button>'; }
+function bangChuong(){
+  if(!window.API_URL || DAY.bat) return '';
+  if(laIOS() && !laCaiRa()) return '<div class="canh-bao chuong">📲 <div><b>Muốn điện thoại báo đơn cả khi tắt app:</b> bấm nút Chia sẻ của Safari → <b>Thêm vào MH chính</b>, mở app từ màn hình chính rồi bấm bật thông báo.</div></div>';
+  if(!dayHoTro()) return '';
+  if(Notification.permission==='denied') return '<div class="canh-bao chuong">🔕 <div>Điện thoại đang <b>chặn thông báo</b> của app. Vào Cài đặt → Thông báo → Nhận đơn HSK → cho phép, rồi mở lại app.</div></div>';
+  return '<div class="canh-bao chuong" onclick="batThongBao()">🔔 <div><b>Bấm vào đây để bật thông báo.</b> Điện thoại sẽ báo khi có đơn mới và khi đơn sắp tới giờ xe, kể cả lúc đang dùng Zalo hay tắt màn hình.</div></div>';
+}
+function kiemDay(){ // mở app: máy đã bật thì gia hạn đăng ký; đã cho phép mà chưa có đăng ký thì tự đăng ký
+  if(!dayHoTro() || !S.pin) return;
+  navigator.serviceWorker.ready.then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(sub){
+    if(sub){ DAY.bat=true; veLai(); return dangKyMay(sub,true); }
+    if(Notification.permission==='granted') return dangKyDay(true);
+  }).catch(function(){});
+}
+function batThongBao(){
+  if(laIOS() && !laCaiRa()){ alert('Trên iPhone phải cài app ra màn hình chính trước: bấm nút Chia sẻ của Safari → Thêm vào MH chính. Sau đó mở app từ màn hình chính rồi bấm bật thông báo.'); return; }
+  if(!dayHoTro()){ alert('Máy này chưa nhận được thông báo đẩy. Hãy dùng app cài từ haisankhai2024.github.io/8899 (Android: mở bằng Chrome; iPhone: iOS 16.4 trở lên).'); return; }
+  if(DAY.bat){ if(confirm('Thông báo đang bật. Gửi một thông báo thử tới máy này?')) navigator.serviceWorker.ready.then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(sub){ if(sub) api('thuThongBao',{pin:S.pin, ep:sub.endpoint}).then(function(){ baoNhanh('Đã gửi thử — chờ vài giây'); }); }); return; }
+  Promise.resolve(Notification.requestPermission()).then(function(q){
+    if(q!=='granted'){ alert('Chưa được phép hiện thông báo. Vào Cài đặt của điện thoại → Thông báo → cho phép app Nhận đơn HSK, rồi bấm lại.'); veLai(); return; }
+    baoNhanh('Đang bật thông báo…'); dangKyDay(false);
+  });
+}
+function dangKyDay(im){
+  if(DAY.dangLam) return; DAY.dangLam=true;
+  return api('khoaDay').then(function(pub){ var k=u8Tu64(pub);
+    return navigator.serviceWorker.ready.then(function(reg){ return reg.pushManager.getSubscription().then(function(sub){
+      if(sub && cungKhoa(sub,k)) return sub;
+      return (sub ? sub.unsubscribe() : Promise.resolve()).then(function(){ return reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:k}); });
+    }); });
+  }).then(function(sub){ DAY.dangLam=false; return dangKyMay(sub,im); })
+    .catch(function(e){ DAY.dangLam=false; if(!im) alert('Chưa bật được thông báo: '+e); });
+}
+function dangKyMay(sub,im){
+  return api('dangKyThietBi',{pin:S.pin, ep:sub.endpoint, ten:S.toi||'', may:navigator.userAgent}).then(function(r){
+    if(!r.ok){ if(!im) alert(r.loi); return; }
+    DAY.bat=true; veLai();
+    if(!im){ baoNhanh('Đã bật — đang gửi thông báo thử'); api('thuThongBao',{pin:S.pin, ep:sub.endpoint}); }
+  });
+}
+
 // ===================== ĐĂNG NHẬP =====================
 function veDangNhap(){
   $('app').innerHTML='<div class="dang-nhap"><h2>Nhận đơn Hải Sản Khải</h2><p>Nhập mã PIN của vựa để vào.</p><input id="pinNhap" type="password" inputmode="numeric" placeholder="Mã PIN" autofocus onkeydown="if(event.key===\'Enter\')dangNhap()"><div class="loi" id="loiPin"></div><button class="nut chinh" style="width:100%;margin-top:8px" onclick="dangNhap()">Vào</button></div>';
@@ -269,7 +320,7 @@ function veDangNhap(){
 }
 function dangNhap(){
   var p=$('pinNhap').value.trim(); if(!p) return; $('loiPin').textContent='Đang kiểm…';
-  api('dangNhap',p).then(function(r){ if(!r.ok){ $('loiPin').textContent='Sai mã PIN'; return; } S.pin=p; S.quanLy=!!r.quan_ly; ls('hsk_pin',p); ls('hsk_ql',S.quanLy?'1':''); if(window.Notification&&Notification.permission==='default'){ try{Notification.requestPermission();}catch(e){} } $('app').innerHTML='<div class="trong">Đang tải đơn…</div>'; taiDuLieu(); });
+  api('dangNhap',p).then(function(r){ if(!r.ok){ $('loiPin').textContent='Sai mã PIN'; return; } S.pin=p; S.quanLy=!!r.quan_ly; ls('hsk_pin',p); ls('hsk_ql',S.quanLy?'1':''); if(window.Notification&&Notification.permission==='default'){ try{Notification.requestPermission();}catch(e){} } $('app').innerHTML='<div class="trong">Đang tải đơn…</div>'; taiDuLieu(); kiemDay(); });
 }
 
 // ===================== NGĂN: ĐƠN MỚI / SỬA =====================
@@ -373,7 +424,7 @@ function luuCaiDat(){
 // ===================== KHỞI ĐỘNG =====================
 (function(){
   S.toi=ls('hsk_toi'); var p=ls('hsk_pin');
-  if(p){ S.pin=p; S.quanLy=ls('hsk_ql')==='1'; $('app').innerHTML='<div class="trong">Đang tải đơn…</div>'; taiDuLieu(); } else ve();
+  if(p){ S.pin=p; S.quanLy=ls('hsk_ql')==='1'; $('app').innerHTML='<div class="trong">Đang tải đơn…</div>'; taiDuLieu(); kiemDay(); } else ve();
   setInterval(function(){ if(S.pin && !S.ngan){ taiDuLieu(true); } }, 45000);
   setInterval(function(){ if(S.pin && !S.ngan){ kiemCanhBao(); veDs(); var g=$('gioHienTai'); if(g) g.textContent=gioISO(new Date()); } }, 30000);
   document.addEventListener('visibilitychange', function(){ if(!document.hidden && S.pin) taiDuLieu(true); });
